@@ -1,0 +1,38 @@
+fastapi
+uvicorn
+openai
+google-cloud-vision
+google-cloud-translate
+google-api-python-client
+google-auth
+google-auth-oauthlib
+vertexai
+sumy
+deep-translator
+langdetect
+python-dotenv
+dateparser
+PyMuPDF
+pytz
+requests
+python-multipart
+
+
+# cd Backend
+# .\venv\Scripts\Activate
+
+
+# cd C:\Users\aryan\OneDrive\Documents\PROJECTS\UNIFIED_AI
+# venv\Scripts\activate
+# uvicorn doc_api.main:app --reload
+
+
+
+# uvicorn doc_api.main:app --reload
+ 
+# http://127.0.0.1:8000/docs#/
+
+# http://127.0.0.1:8000/auth
+
+# http://127.0.0.1:8000/fetch-mails
+

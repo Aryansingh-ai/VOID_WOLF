@@ -39,3 +39,28 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# CRITICAL: Secret & Credential Files - NEVER UPLOAD
+**/client_secret.json
+**/credentials.json
+**/service_account.json
+**/token.json
+Backend/doc_api/client_secret.json
+Backend/doc_api/credentials.json
+Backend/doc_api/service_account.json
+Backend/doc_api/token.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+Backend/outputs/
+Backend/downloads/
+
+# Large/temp files
+build-error.txt
+build.log
+zzz.txt
