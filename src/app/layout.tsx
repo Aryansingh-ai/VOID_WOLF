@@ -28,6 +28,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      style={{ fontFamily: "Calibri, 'Segoe UI', 'Segoe UI', Roboto, sans-serif" }}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden">

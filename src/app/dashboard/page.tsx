@@ -1,17 +1,22 @@
-import Link from "next/link";
+"use client";
+
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Mail, FileText, Brain, ArrowRight, Play, Activity, Clock } from "lucide-react";
 import AnoAI from "@/components/ui/animated-shader-background";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth-provider";
 
 export default function OverviewPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   return (
     <div className="relative min-h-[calc(100vh-6rem)] w-full overflow-hidden rounded-2xl animate-in fade-in zoom-in duration-500">
       <AnoAI />
       
       <div className="relative z-10 p-4 md:p-8 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Good morning, Admin</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Good morning, {user?.name || "User"}</h1>
           <p className="text-muted-foreground">Run your AI operations from one command center.</p>
         </div>
 
@@ -24,12 +29,14 @@ export default function OverviewPage() {
             </div>
             <h3 className="text-xl font-bold text-white mb-2">{mod.title}</h3>
             <p className="text-sm text-muted-foreground flex-1 mb-6">{mod.desc}</p>
-            <Link href={mod.href}>
-              <Button className="w-full bg-white hover:bg-[#E5E5E5] text-black font-semibold shadow-none transition-all">
-                Open Module
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
+            <button 
+              onClick={() => router.push(mod.href)}
+              type="button"
+              className="w-full bg-white hover:bg-gray-200 text-black font-semibold p-2.5 h-10 transition-all cursor-pointer rounded-lg border-0"
+            >
+              Open Module
+              <ArrowRight className="w-4 h-4 ml-2 inline" />
+            </button>
           </GlassCard>
         ))}
       </div>
@@ -51,7 +58,11 @@ export default function OverviewPage() {
                 </span>
               </div>
               <p className="text-sm font-medium text-white line-clamp-2">{work.title}</p>
-              <Button variant="ghost" className="w-fit p-0 h-auto text-[#3B82F6] hover:text-[#3B82F6]/80 hover:bg-transparent text-sm">
+              <Button 
+                onClick={() => router.push(work.href)}
+                type="button"
+                className="!w-fit !p-0 !h-auto !text-blue-400 hover:!text-blue-300 !bg-transparent !border-0 !text-sm !cursor-pointer"
+              >
                 View Result <Play className="w-3 h-3 ml-1 fill-current" />
               </Button>
             </GlassCard>
@@ -70,7 +81,7 @@ const quickActions = [
 ];
 
 const recentWork = [
-  { type: "Document Summary", title: "Q3 Financial Report Analysis", time: "10 mins ago" },
-  { type: "Email Priority", title: "Extracted 3 High Priority emails from 'Investors'", time: "1 hour ago" },
-  { type: "Workflow", title: "Daily Sync Meeting Notes Extracted", time: "3 hours ago" },
+  { type: "Document Summary", title: "Q3 Financial Report Analysis", time: "10 mins ago", href: "/dashboard/documents" },
+  { type: "Email Priority", title: "Extracted 3 High Priority emails from 'Investors'", time: "1 hour ago", href: "/dashboard/email" },
+  { type: "Workflow", title: "Daily Sync Meeting Notes Extracted", time: "3 hours ago", href: "/dashboard/email" },
 ];

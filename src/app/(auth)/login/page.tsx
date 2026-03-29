@@ -45,7 +45,7 @@ export default function LoginPage() {
         </div>
 
         <Button 
-          onClick={() => window.location.href = "http://127.0.0.1:8000/auth"}
+          onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/auth`}
           className="w-full h-12 bg-white hover:bg-[#E5E5E5] text-black font-semibold text-lg transition-all duration-300 group"
         >
           Sign In

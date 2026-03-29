@@ -12,6 +12,7 @@ import {
   CheckSquare,
   Workflow,
   BarChart2,
+  CreditCard,
   Settings,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const navItems = [
   { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
   { name: "Workflows", href: "/dashboard/workflows", icon: Workflow },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart2 },
+  { name: "Pricing", href: "/dashboard/pricing", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

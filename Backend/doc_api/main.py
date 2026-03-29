@@ -30,6 +30,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek/deepseek-chat")
+
+# ================== FRONTEND & AUTH CONFIG ==================
+# Environment-based URLs for dev/production
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+
 # --- Verify client secret path exists ---
 CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, os.getenv("GOOGLE_CLIENT_SECRET_PATH"))
 
@@ -137,14 +143,21 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = cred_path
 
 # ================== FASTAPI APP SETUP ==================
 app = FastAPI(title="AI Meeting Assistant API")
+
+# Dynamic CORS configuration
+cors_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+# Add frontend URL if it's different (for Vercel deployment)
+if FRONTEND_URL not in cors_origins:
+    cors_origins.append(FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -797,23 +810,32 @@ def add_to_calendar(meetings: List[Dict]) -> List[str]:
 def home():
     return {"message": "🚀 AI Meeting Assistant (Gemini + DeepSeek + Vertex + Local) active"}
 
+# ================== OAUTH STATE STORE ==================
+# Store flows by state to preserve code_verifier across requests
+_oauth_flows = {}
+
 # (rest of your routes remain unchanged — total lines now ≈590+)
 @app.get("/auth")
 def auth_google():
-    redirect_uri = "http://127.0.0.1:8000/auth/callback"
+    redirect_uri = f"{BACKEND_URL}/auth/callback"
     flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri)
-    auth_url, _ = flow.authorization_url(access_type="offline", prompt="consent")
+    auth_url, state = flow.authorization_url(access_type="offline", prompt="consent")
+    _oauth_flows[state] = flow
     return RedirectResponse(auth_url)
 
 @app.get("/auth/callback")
-def auth_callback(code: str):
-    redirect_uri = "http://127.0.0.1:8000/auth/callback"
-    flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri)
+def auth_callback(code: str, state: str):
+    if state not in _oauth_flows:
+        raise HTTPException(status_code=400, detail="Invalid or expired state. Please restart the authorization flow.")
+    
+    flow = _oauth_flows.pop(state)  # Remove to prevent reuse
     flow.fetch_token(code=code)
     creds = flow.credentials
     with open(TOKEN_PATH, "w") as token:
         token.write(creds.to_json())
-    return {"message": "Authentication successful. You can now call /fetch-mails"}
+    
+    # Redirect to dashboard instead of returning JSON
+    return RedirectResponse(url=f"{FRONTEND_URL}/dashboard")
 
 
 from email.utils import parsedate_to_datetime

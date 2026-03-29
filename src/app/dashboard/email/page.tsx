@@ -76,24 +76,36 @@ export default function EmailIntelligencePage() {
     safeText = safeText.replace(/\*\*([^*]+)\*\*/g, "$1");
     safeText = safeText.replace(/\*([^*]+)\*/g, "$1");
 
-    // Specific Highlights based on user rules
-    // 1. Dates (e.g. Friday, 27th March or Mar 27)
+    // ===== TIER 1: CRITICAL RED HIGHLIGHTS ONLY =====
+    // Only for truly urgent/critical terms
+    safeText = safeText.replace(
+      /\b(urgent|deadline|action required|critical|asap|immediately)\b/gi,
+      '<span class="inline-block bg-red-500/20 text-red-300 px-2 py-0.5 rounded-md text-xs font-semibold mx-0.5 border border-red-500/30">$1</span>'
+    );
+
+    // ===== TIER 2: DATES (soft purple, no badge) =====
     safeText = safeText.replace(
       /\b((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,]?\s*\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December))\b/gi,
-      '<span class="inline-block bg-[#8B5CF6]/10 text-[#C084FC] px-2 py-0.5 rounded-md text-xs font-medium mx-1">$1</span>'
+      '<span class="text-purple-300 font-medium">$1</span>'
     );
     safeText = safeText.replace(
-      /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[A-Za-z]*\s+\d{1,2}(?:st|nd|rd|th)?)\b/gi,
-      '<span class="inline-block bg-[#8B5CF6]/10 text-[#C084FC] px-2 py-0.5 rounded-md text-xs font-medium mx-1">$1</span>'
+      /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[A-Za-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?)\b/gi,
+      '<span class="text-purple-300 font-medium">$1</span>'
     );
 
-    // 2. Times / Deadlines (e.g. 11:59 PM)
+    // ===== TIER 3: TIMES (soft blue, no badge) =====
     safeText = safeText.replace(
-      /\b(\d{1,2}:\d{2}\s*(?:am|pm|AM|PM))\b/g,
-      '<strong class="inline-block bg-[#8B5CF6]/10 text-[#C084FC] px-2 py-0.5 rounded-md text-xs font-bold mx-1">$1</strong>'
+      /\b(\d{1,2}:\d{2}\s*(?:am|pm|AM|PM|a\.m\.|p\.m\.))\b/g,
+      '<span class="text-blue-300 font-semibold">$1</span>'
     );
 
-    // 3. Numbers / Metrics (e.g. 17.5%, $250B)
+    // ===== TIER 4: EMAIL ADDRESSES (cyan, underline on context) =====
+    safeText = safeText.replace(
+      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g,
+      '<span class="text-cyan-400 font-medium">$1</span>'
+    );
+
+    // ===== TIER 5: NUMBERS / METRICS (bright white only) =====
     safeText = safeText.replace(
       /\b(\$\d+(?:\.\d+)?(?:[kKmMbB]?)|(?:[0-9]+(?:\.\d+)?)%)\b/g,
       '<strong class="text-white font-semibold">$1</strong>'
@@ -313,10 +325,10 @@ export default function EmailIntelligencePage() {
               const isMedium = priority === 'medium';
               const isLow = priority === 'low';
               
-              const color = isHigh ? "text-red-400 bg-red-400/10 border-red-400/20" 
-                          : isMedium ? "text-yellow-400 bg-yellow-400/10 border-yellow-400/20"
-                          : isLow ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
-                          : "text-[#A1A1AA] bg-transparent border-[#1F1F22]";
+              const color = isHigh ? "text-red-300 bg-red-500/20 border-red-500/30" 
+                          : isMedium ? "text-amber-300 bg-amber-500/15 border-amber-500/25" 
+                          : isLow ? "text-emerald-300 bg-emerald-500/15 border-emerald-500/25"
+                          : "text-zinc-400 bg-white/5 border-white/10";
 
               // Try to find a deadline inside the summary
               // A very simple look-around for the word deadline or an explicit date
@@ -324,9 +336,9 @@ export default function EmailIntelligencePage() {
               const deadlinePill = deadlineMatch ? deadlineMatch[2].replace(/[*]*/g, '').trim() : null;
 
               return (
-                <GlassCard key={i} className="p-4 sm:p-5 flex flex-col gap-4 relative overflow-hidden group bg-white/[0.02] backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-300">
+                <GlassCard key={i} className="p-4 sm:p-5 flex flex-col gap-4 relative overflow-hidden group bg-white/[0.03] backdrop-blur-md border border-white/10 hover:border-white/15 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   {/* Priority Accent */}
-                  {isHigh && <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-red-500 to-transparent opacity-70" />}
+                  {isHigh && <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-red-500 via-red-500/30 to-transparent opacity-70 group-hover:opacity-100 transition-opacity" />}
                   
                   {/* Header Row */}
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -334,8 +346,8 @@ export default function EmailIntelligencePage() {
                        <div className="flex items-center gap-2 mb-2">
                          <span className={cn("px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-widest", color)}>{priority}</span>
                          {deadlinePill && (
-                           <span className="px-2.5 py-1 rounded-md text-[10px] font-bold border border-orange-500/20 bg-orange-500/10 text-orange-400 uppercase tracking-widest flex items-center gap-1.5">
-                             <Clock className="w-3 h-3" /> Deadline: {deadlinePill}
+                           <span className="px-2.5 py-1 rounded-md text-[10px] font-bold border border-orange-500/40 bg-orange-500/15 text-orange-300 uppercase tracking-widest flex items-center gap-1.5">
+                             <Clock className="w-3 h-3" /> {deadlinePill}
                            </span>
                          )}
                        </div>
@@ -344,20 +356,32 @@ export default function EmailIntelligencePage() {
                          From: <strong className="text-[#E5E5E5] font-semibold">{email.sender}</strong>
                        </p>
                     </div>
-                    <Button 
-                      onClick={() => window.open(email.mail_link, '_blank')}
-                      variant="outline" 
-                      size="sm" 
-                      className="border-[#8B5CF6]/30 bg-[#8B5CF6]/10 text-[#8B5CF6] hover:bg-[#8B5CF6]/20 hover:text-white hover:border-[#8B5CF6] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] shrink-0 h-10 px-4 group"
-                    >
-                      View Email <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <Button 
+                        onClick={() => window.open(email.mail_link, '_blank')}
+                        size="sm" 
+                        className="bg-gradient-to-br from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold shadow-lg shadow-emerald-700/40 hover:shadow-emerald-600/50 hover:scale-105 transition-all duration-200 h-10 px-4 group"
+                      >
+                        View Email <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                      {email.calendar_link && (
+                        <Button 
+                          onClick={() => window.open(email.calendar_link, '_blank')}
+                          variant="outline" 
+                          size="sm" 
+                          className="border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/15 hover:text-blue-200 transition-all duration-200 hover:scale-103 h-10 px-4 group w-full"
+                          title="View in Calendar"
+                        >
+                          <Calendar className="w-4 h-4 mr-2" /> Calendar
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Summary Content */}
                   <div className="w-full">
                     <div 
-                      className="text-base font-normal text-[#D4D4D8]"
+                      className="text-base font-normal text-zinc-300 leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: formatAIContent(email.summary) || "No summary available." }}
                     />
                   </div>
@@ -365,13 +389,13 @@ export default function EmailIntelligencePage() {
                   {/* Documents */}
                   {email.document_detected && email.attachments?.length > 0 && (
                     <div className="mt-3 space-y-3 pt-4 border-t border-white/5">
-                      <h4 className="text-xs font-semibold text-[#8B5CF6] flex items-center gap-2 uppercase tracking-wide">
+                      <h4 className="text-xs font-semibold text-purple-300 flex items-center gap-2 uppercase tracking-widest pl-3 border-l-3 border-purple-600/60">
                         <FileText className="w-3 h-3"/> Attached Documents
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {email.attachments.map((att: any, attIdx: number) => (
-                          <div key={attIdx} className="bg-white/[0.02] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-                            <p className="text-sm font-semibold text-[#EAEAEA] mb-2">{att.filename}</p>
+                          <div key={attIdx} className="bg-white/[0.02] p-4 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-200">
+                            <p className="text-sm font-semibold text-white mb-2">{att.filename}</p>
                             <div 
                               className="text-sm text-[#A1A1AA] font-normal leading-relaxed"
                               dangerouslySetInnerHTML={{ __html: formatAIContent(att.summary) || "" }}

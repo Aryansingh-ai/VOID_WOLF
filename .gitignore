@@ -49,6 +49,32 @@ Backend/doc_api/client_secret.json
 Backend/doc_api/credentials.json
 Backend/doc_api/service_account.json
 Backend/doc_api/token.json
+Backend/doc_api/.env
+Backend/venv/
+Backend/__pycache__/
+Backend/doc_api/__pycache__/
+Backend/outputs/
+Backend/downloads/
+
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs
+*.log
+lerna-debug.log*
+Backend/doc_api/token.json
 
 # Python
 __pycache__/
