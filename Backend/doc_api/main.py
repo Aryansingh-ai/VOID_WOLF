@@ -48,8 +48,9 @@ from doc_api.openai_client import client  # ✅ Single shared OpenAI client
 # Uses the official REST endpoint (free tier, large context)
 import requests
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-exp")
-GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+# Use stable model; 2.0-flash-exp may not be available in all API versions
+GEMINI_MODEL_PREFERRED = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL_PREFERRED}:generateContent"
 
 
 def _safe_trim(text: str, limit: int = 100000):
@@ -61,6 +62,7 @@ def _safe_trim(text: str, limit: int = 100000):
 def gemini_generate_text(prompt: str, temperature: float = 0.2, max_output_tokens: int = 1024) -> Optional[str]:
     """Call Gemini for text output. Returns string or None."""
     if not GEMINI_API_KEY:
+        print("⚠️ Gemini API key not configured, skipping Gemini")
         return None
     try:
         payload = {
@@ -73,20 +75,26 @@ def gemini_generate_text(prompt: str, temperature: float = 0.2, max_output_token
         params = {"key": GEMINI_API_KEY}
         r = requests.post(GEMINI_ENDPOINT, params=params, json=payload, timeout=45)
         if r.status_code != 200:
-            print("Gemini API error:", r.status_code, r.text[:500])
+            try:
+                error_detail = r.json().get("error", {}).get("message", "Unknown error")
+            except:
+                error_detail = r.text[:200]
+            print(f"❌ Gemini API error ({r.status_code}): {error_detail}")
             return None
         data = r.json()
         # Handle candidates structure
         candidates = data.get("candidates") or []
         if not candidates:
+            print("⚠️ Gemini returned no candidates")
             return None
         parts = candidates[0].get("content", {}).get("parts", [])
         if not parts:
+            print("⚠️ Gemini returned no parts in response")
             return None
         text = "".join([p.get("text", "") for p in parts]).strip()
         return text or None
     except Exception as e:
-        print("Gemini request failed:", e)
+        print(f"❌ Gemini request failed: {str(e)[:200]}")
         return None
 
 def gemini_generate_json(prompt: str, temperature: float = 0.0, max_output_tokens: int = 1024) -> Optional[dict]:
@@ -420,7 +428,11 @@ Text:
         )
         return format_summary_points(resp.choices[0].message.content.strip())
     except Exception as e:
-        print("DeepSeek summarization failed:", e)
+        error_str = str(e)
+        if "402" in error_str or "credit" in error_str.lower():
+            print("⚠️ DeepSeek: Insufficient credits - falling back to Gemini")
+        else:
+            print(f"❌ DeepSeek summarization failed: {error_str[:150]}")
         return None
 
 def summarize_with_fallback(text: str):
@@ -475,7 +487,11 @@ Text:
         match = re.search(r"\{.*\}", content, re.S)
         return json.loads(match.group(0)) if match else None
     except Exception as e:
-        print("DeepSeek classification failed:", e)
+        error_str = str(e)
+        if "402" in error_str or "credit" in error_str.lower():
+            print("⚠️ DeepSeek classification: Insufficient credits - falling back to Gemini")
+        else:
+            print(f"❌ DeepSeek classification failed: {error_str[:150]}")
         return None
 
 # ================== 🔥 ADDED: Gemini-first classification ==================
@@ -747,7 +763,11 @@ Text:
                     return _augment_with_detected_links(meetings)
 
         except Exception as e:
-            print("DeepSeek meeting extraction failed:", e)
+            error_str = str(e)
+            if "402" in error_str or "credit" in error_str.lower():
+                print("⚠️ DeepSeek meeting extraction: Insufficient credits - using regex fallback")
+            else:
+                print(f"❌ DeepSeek meeting extraction failed: {error_str[:150]}")
 
     # 3️⃣ Regex fallback
     links = _extract_meeting_links(text)
